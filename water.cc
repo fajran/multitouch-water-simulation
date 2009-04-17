@@ -2,6 +2,13 @@
 #include "SDL/SDL.h"
 #include "SDL/SDL_image.h"
 #include <string>
+#include <TuioClient.h>
+#include <TuioListener.h>
+#include <TuioObject.h>
+#include <TuioCursor.h>
+
+using namespace TUIO;
+using namespace std;
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
@@ -20,6 +27,23 @@ Uint32 texture[WIDTH*HEIGHT];
 int oldind = WIDTH;
 int newind = WIDTH * (HEIGHT+3);
 int riprad = 3;
+
+class DummyListener : public TuioListener 
+{
+public:
+	DummyListener() { }
+	~DummyListener() { }
+
+	void addTuioObject(TuioObject *tobj) { }
+	void updateTuioObject(TuioObject *tobj) { }
+	void removeTuioObject(TuioObject *tobj) { }
+	
+	void addTuioCursor(TuioCursor *tcur) { }
+	void updateTuioCursor(TuioCursor *tcur) { }
+	void removeTuioCursor(TuioCursor *tcur) { }
+	
+	void refresh(TuioTime packetTime) { }
+};
 
 SDL_Surface* load_image(std::string fname)
 {
@@ -110,12 +134,15 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	image = load_image(argc > 1 ? argv[1] : "img.png");
+	image = load_image(argc > 1 ? argv[1] : "img.jpg");
 	apply_surface(0, 0, image, screen);
 
 	SDL_WM_SetCaption("Water Simulation", NULL);
-
 	SDL_Event event;
+
+	TuioClient* client = new TuioClient(3333);
+	client->addTuioListener(new DummyListener());
+	client->connect();
 
 	bool quit = false;
 	while (!quit) {
@@ -129,6 +156,16 @@ int main(int argc, char** argv)
 					break;
 			}
 		}
+
+		list<TuioCursor*> cursors = client->getTuioCursors();
+		client->lockCursorList();
+		for (list<TuioCursor*>::iterator iter=cursors.begin(); iter != cursors.end(); iter++) {
+			TuioCursor* cursor = *iter;
+			int x = cursor->getX() * WIDTH;
+			int y = cursor->getY() * HEIGHT;
+			disturb(x, y);
+		}
+		client->unlockCursorList();
 
 		frame();
 
