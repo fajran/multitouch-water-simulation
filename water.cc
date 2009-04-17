@@ -129,6 +129,8 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	bool fullscreen = false;
+
 	screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, SDL_SWSURFACE);
 	if (screen == NULL) {
 		return 1;
@@ -150,6 +152,25 @@ int main(int argc, char** argv)
 			switch (event.type) {
 				case SDL_MOUSEMOTION:
 					disturb(event.button.x, event.button.y);
+					break;
+				case SDL_KEYDOWN:
+					switch (event.key.keysym.sym) {
+						case 'q': 
+						case SDLK_ESCAPE: 
+							quit = true;
+							break;
+						case 'f':
+							if (fullscreen) {
+								screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, SDL_SWSURFACE);
+							}
+							else {
+								screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, SDL_SWSURFACE | SDL_FULLSCREEN);
+							}
+							fullscreen = !fullscreen;
+							break;
+						default:
+							break;
+					}
 					break;
 				case SDL_QUIT:
 					quit = true;
